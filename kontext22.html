@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch lernen: Markierungsaufgabe</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #e2e8f0;
+            --success-color: #48bb78;
+            --success-bg: #e6fffa;
+            --error-color: #f56565;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 650px;
+            width: 100%;
+            padding: 24px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .counter {
+            text-align: center;
+            font-size: 1rem;
+            color: #2b6cb0;
+            margin-bottom: 16px;
+            font-weight: bold;
+            background: #ebf8ff;
+            padding: 8px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            width: fit-content;
+        }
+
+        .instructions {
+            font-size: 0.95rem;
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        /* Styling für den Chatverlauf */
+        .chat-container {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 1.15rem;
+            line-height: 1.5;
+        }
+
+        .chat-bubble.left {
+            background-color: #edf2f7;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-bubble.right {
+            background-color: #e2e8f0;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            text-align: right;
+        }
+
+        .author-name {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #718096;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            display: block;
+        }
+
+        /* Interaktiver Text im Chat */
+        .word-clickable {
+            display: inline-block;
+            cursor: pointer;
+            padding: 2px 4px;
+            margin: 0 1px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (hover: hover) {
+            .word-clickable:hover:not(.found) {
+                background-color: #cbd5e0;
+            }
+        }
+
+        /* Zustand: Richtig markiert */
+        .word-clickable.found {
+            background-color: var(--success-color) !important;
+            color: white !important;
+            font-weight: bold;
+            cursor: default;
+        }
+
+        /* Zustand: Falsch geklickt */
+        .word-clickable.wrong {
+            background-color: var(--error-color) !important;
+            color: white !important;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+
+        /* Übersetzungseinblendung am Ende */
+        .translation-box {
+            background: #f7fafc;
+            border-left: 4px solid var(--success-color);
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            color: #4a5568;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .translation-box h4 {
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        /* Kontroll-Buttons */
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        button {
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            max-width: 250px;
+            background-color: #718096;
+        }
+
+        button:hover {
+            background-color: #4a5568;
+        }
+
+        .feedback {
+            text-align: center;
+            margin-top: 16px;
+            font-weight: bold;
+            min-height: 24px;
+            font-size: 1.1rem;
+        }
+        .feedback.success { color: var(--success-color); }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h2>Markierungsaufgabe</h2>
+    <div class="counter" id="counterTrack">Gefunden: 0 von 3</div>
+    <p class="instructions">
+        Lies den Chatverlauf zwischen Anna und Max. Klicke auf alle Wörter (z.B. <b>чего</b>), die in diesem Kontext umgangssprachlich <b>„warum“</b> bedeuten.
+    </p>
+
+    <div class="chat-container">
+        <div class="chat-bubble left">
+            <span class="author-name">Анна</span>
+            <span class="word-clickable" data-target="true">Ты</span> 
+            <span class="word-clickable" data-target="true" data-id="1">чего</span> 
+            <span class="word-clickable" data-target="true">такой</span> 
+            <span class="word-clickable" data-target="true">грустный?</span>
+        </div>
+        
+        <div class="chat-bubble right">
+            <span class="author-name">Макс</span>
+            <span class="word-clickable" data-target="false">Я</span> 
+            <span class="word-clickable" data-target="false">ничего</span> 
+            <span class="word-clickable" data-target="false">не</span> 
+            <span class="word-clickable" data-target="false">знаю,</span> 
+            <span class="word-clickable" data-target="false">просто</span> 
+            <span class="word-clickable" data-target="false">устал.</span>
+        </div>
+
+        <div class="chat-bubble left">
+            <span class="author-name">Анна</span>
+            <span class="word-clickable" data-target="false">А</span> 
+            <span class="word-clickable" data-target="true" data-id="2">чего</span> 
+            <span class="word-clickable" data-target="false">ты</span> 
+            <span class="word-clickable" data-target="false">вчера</span> 
+            <span class="word-clickable" data-target="false">не</span> 
+            <span class="word-clickable" data-target="false">пришла?</span>
+        </div>
+
+        <div class="chat-bubble right">
+            <span class="author-name">Макс</span>
+            <span class="word-clickable" data-target="false">Чего</span> 
+            <span class="word-clickable" data-target="false">ты</span> 
+            <span class="word-clickable" data-target="false">хочешь</span> 
+            <span class="word-clickable" data-target="false">от</span> 
+            <span class="word-clickable" data-target="false">меня?</span> 
+            <span class="word-clickable" data-target="false">Я</span> 
+            <span class="word-clickable" data-target="false">спал.</span>
+        </div>
+
+        <div class="chat-bubble left">
+            <span class="author-name">Анна</span>
+            <span class="word-clickable" data-target="false">Ну</span> 
+            <span class="word-clickable" data-target="false">ладно,</span> 
+            <span class="word-clickable" data-target="false">а</span> 
+            <span class="word-clickable" data-target="true" data-id="3">чего</span> 
+            <span class="word-clickable" data-target="false">ты</span> 
+            <span class="word-clickable" data-target="false">смеёшься</span> 
+            <span class="word-clickable" data-target="false">сейчас?</span>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="translation-box" id="translationBox">
+        <h4>Deutsche Übersetzung des Chats:</h4>
+        <p><b>Anna:</b> Warum bist du so traurig?</p>
+        <p><b>Max:</b> Ich weiß von nichts, ich bin einfach müde.</p>
+        <p><b>Anna:</b> Und warum bist du gestern nicht gekommen?</p>
+        <p><b>Max:</b> Was willst du von mir? Ich habe geschlafen.</p>
+        <p><b>Anna:</b> Na gut, und warum lachst du dann jetzt?</p>
+    </div>
+
+    <div class="controls">
+        <button id="resetBtn" onclick="resetGame()">Zurücksetzen</button>
+    </div>
+</div>
+
+<script>
+    const totalTargets = 3;
+    let foundTargets = 0;
+
+    const words = document.querySelectorAll('.word-clickable');
+    const counterTrack = document.getElementById('counterTrack');
+    const feedback = document.getElementById('feedback');
+    const translationBox = document.getElementById('translationBox');
+
+    // Klick-Logik für jedes Wort initialisieren
+    words.forEach(word => {
+        word.addEventListener('click', () => {
+            // Wenn das Wort bereits richtig gefunden wurde, Klick ignorieren
+            if (word.classList.contains('found')) return;
+
+            // Prüfen, ob das Wort ein ID-Attribut hat (nur die korrekten 'чего' mit Bedeutung 'warum' haben data-id)
+            if (word.hasAttribute('data-id')) {
+                // Richtiges Wort erwischt!
+                word.classList.remove('wrong');
+                word.classList.add('found');
+                foundTargets++;
+                updateCounter();
+
+                // Überprüfen, ob alle Ziele gefunden wurden
+                if (foundTargets === totalTargets) {
+                    feedback.textContent = "Hervorragend! Du hast alle 3 umgangssprachlichen Bedeutungen von „warum“ entdeckt! 🎉";
+                    feedback.className = "feedback success";
+                    translationBox.style.display = "block"; // Übersetzung einblenden
+                }
+            } else {
+                // Falsches Wort erwischt -> Kurzes visuelles Fehlersignal
+                word.classList.add('wrong');
+                setTimeout(() => {
+                    word.classList.remove('wrong');
+                }, 300);
+            }
+        });
+    });
+
+    function updateCounter() {
+        counterTrack.textContent = `Gefunden: ${foundTargets} von ${totalTargets}`;
+    }
+
+    function resetGame() {
+        foundTargets = 0;
+        updateCounter();
+        feedback.textContent = "";
+        feedback.className = "feedback";
+        translationBox.style.display = "none";
+
+        words.forEach(word => {
+            word.className = "word-clickable";
+        });
+    }
+</script>
+
+</body>
+</html>
