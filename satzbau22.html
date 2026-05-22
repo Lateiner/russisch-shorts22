@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch lernen: Satzbau-Puzzle (чего / почему)</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #1e4e8c;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #e2e8f0;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            padding: 24px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .progress {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 16px;
+            font-weight: bold;
+        }
+
+        .instructions {
+            font-size: 0.95rem;
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .translation-hint {
+            text-align: center;
+            font-style: italic;
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+            background: #edf2f7;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        /* Bereich für den entstehenden Satz */
+        .sentence-builder {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            min-height: 70px;
+            padding: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        /* Wort-Pool */
+        .word-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            min-height: 70px;
+            margin-bottom: 24px;
+            padding: 12px;
+            background: #edf2f7;
+            border-radius: 8px;
+        }
+
+        /* Die Wort-Kacheln */
+        .word-tile {
+            background: #ffffff;
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (hover: hover) {
+            .word-tile:hover:not(.placed) {
+                border-color: #cbd5e0;
+                transform: translateY(-2px);
+            }
+        }
+
+        /* Animation bei Fehlern */
+        .word-tile.wrong {
+            background-color: var(--error-color) !important;
+            color: white !important;
+            border-color: var(--error-color) !important;
+            animation: shake 0.3s ease;
+        }
+
+        /* Zustand im fertigen Satz */
+        .word-tile.placed {
+            background-color: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+            cursor: default;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        /* Kontroll-Buttons */
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        button {
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            max-width: 250px;
+            background-color: #718096;
+            display: none;
+        }
+
+        button:hover {
+            background-color: #4a5568;
+        }
+
+        .feedback {
+            text-align: center;
+            margin-top: 16px;
+            font-weight: bold;
+            min-height: 24px;
+            font-size: 1.1rem;
+        }
+        .feedback.success { color: var(--success-color); }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h2>Satzbau-Puzzle</h2>
+    <div class="progress" id="progressTrack">Satz 1 von 6</div>
+    <p class="instructions">
+        Bilde den russischen Satz, indem du die Wörter in der richtigen Reihenfolge anklickst. Ein falsches Wort blitzt rot auf.
+    </p>
+
+    <div class="translation-hint" id="translationHint">Anzeige der Übersetzung...</div>
+
+    <div class="sentence-builder" id="sentenceBuilder"></div>
+
+    <div class="word-pool" id="wordPool"></div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="controls">
+        <button id="resetBtn">Ganz von vorn starten</button>
+    </div>
+</div>
+
+<script>
+    // Die 6 Sätze zum Thema Umgangssprache (чего) und Standardsprache (почему)
+    const puzzleData = [
+        {
+            correctOrder: ["Ты", "чего", "такой", "грустный"],
+            hint: "Umgangssprache: „Warum bist du so traurig?“"
+        },
+        {
+            correctOrder: ["Почему", "ты", "такой", "грустный"],
+            hint: "Standardsprache: „Warum bist du so traurig?“"
+        },
+        {
+            correctOrder: ["А", "чего", "ты", "вчера", "не", "пришла", "на", "вечеринку"],
+            hint: "Umgangssprache: „Warum bist du gestern nicht zur Party gekommen?“"
+        },
+        {
+            correctOrder: ["Почему", "ты", "вчера", "не", "пришла", "на", "вечеринку"],
+            hint: "Standardsprache: „Warum bist du gestern nicht zur Party gekommen?“"
+        },
+        {
+            correctOrder: ["Ты", "чего", "не", "пришла"],
+            hint: "Umgangssprache: „Warum bist du nicht gekommen?“"
+        },
+        {
+            correctOrder: ["А", "чего", "ты", "смеёшься"],
+            hint: "Umgangssprache: „Warum lachst du denn?“"
+        }
+    ];
+
+    let currentSentenceIndex = 0;
+    let currentWordIndex = 0;
+
+    const progressTrack = document.getElementById('progressTrack');
+    const translationHint = document.getElementById('translationHint');
+    const sentenceBuilder = document.getElementById('sentenceBuilder');
+    const wordPool = document.getElementById('wordPool');
+    const feedback = document.getElementById('feedback');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function loadSentence() {
+        sentenceBuilder.innerHTML = "";
+        wordPool.innerHTML = "";
+        feedback.textContent = "";
+        feedback.className = "feedback";
+        currentWordIndex = 0;
+
+        const currentData = puzzleData[currentSentenceIndex];
+        progressTrack.textContent = `Satz ${currentSentenceIndex + 1} von ${puzzleData.length}`;
+        translationHint.textContent = currentData.hint;
+
+        // Wörter klonen und für den Pool mischen (Fisher-Yates)
+        let shuffledWords = [...currentData.correctOrder];
+        for (let i = shuffledWords.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledWords[i], shuffledWords[j]] = [shuffledWords[j], shuffledWords[i]];
+        }
+
+        shuffledWords.forEach(word => {
+            const tile = document.createElement('div');
+            tile.className = 'word-tile';
+            tile.textContent = word;
+            
+            tile.addEventListener('click', () => handleWordClick(tile, word));
+            wordPool.appendChild(tile);
+        });
+    }
+
+    function handleWordClick(tile, clickedWord) {
+        // Falls das Wort schon verbaut ist, Klick ignorieren
+        if (tile.classList.contains('placed')) return;
+
+        const currentData = puzzleData[currentSentenceIndex];
+        const expectedWord = currentData.correctOrder[currentWordIndex];
+
+        if (clickedWord === expectedWord) {
+            // Richtiges Wort gewählt
+            tile.classList.add('placed');
+            sentenceBuilder.appendChild(tile);
+            currentWordIndex++;
+
+            // Überprüfen, ob der aktuelle Satz fertig ist
+            if (currentWordIndex === currentData.correctOrder.length) {
+                if (currentSentenceIndex < puzzleData.length - 1) {
+                    feedback.textContent = "Super! Nächster Satz...";
+                    feedback.className = "feedback success";
+                    currentSentenceIndex++;
+                    setTimeout(loadSentence, 1400); // Kurze Pause vor dem nächsten Satz
+                } else {
+                    feedback.textContent = "Genial! Du hast alle 6 Sätze fehlerfrei gebaut! 🎉";
+                    feedback.className = "feedback success";
+                    wordPool.style.display = 'none';
+                    resetBtn.style.display = 'block';
+                }
+            }
+        } else {
+            // Falsches Wort gewählt -> Direktes Fehlersignal (Rütteln und Rot)
+            tile.classList.add('wrong');
+            setTimeout(() => {
+                tile.classList.remove('wrong');
+            }, 300);
+        }
+    }
+
+    // --- NEUSTART ---
+    resetBtn.addEventListener('click', () => {
+        currentSentenceIndex = 0;
+        wordPool.style.display = 'flex';
+        resetBtn.style.display = 'none';
+        loadSentence();
+    });
+
+    // Erstes Laden beim Start
+    loadSentence();
+</script>
+
+</body>
+</html>
