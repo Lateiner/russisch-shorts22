@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Lernspiel: Multiple-Choice</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #bdc3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .quiz-container {
+                padding: 20px 15px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #1a252f;
+        }
+
+        .question-box {
+            background-color: #e8f4fd;
+            border-left: 5px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #fff;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Hover-Effekt nur auf Geräten mit Mauszeiger */
+        @media (hover: hover) {
+            .option-item:hover:not(.disabled) {
+                border-color: var(--primary-color);
+                background-color: #f7faff;
+            }
+        }
+
+        .option-item.selected {
+            border-color: var(--primary-color);
+            background-color: #e8f4fd;
+        }
+
+        .option-item.correct {
+            border-color: var(--success-color);
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .option-item.incorrect {
+            border-color: var(--error-color);
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .option-item.disabled {
+            cursor: not-allowed;
+        }
+
+        .radio-indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .option-item.selected .radio-indicator {
+            border-color: var(--primary-color);
+        }
+
+        .option-item.selected .radio-indicator::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+        }
+
+        .option-item.correct .radio-indicator {
+            border-color: var(--success-color);
+            background-color: var(--success-color);
+        }
+
+        .option-item.incorrect .radio-indicator {
+            border-color: var(--error-color);
+            background-color: var(--error-color);
+        }
+
+        .option-text {
+            font-size: 1.05rem;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .btn-submit {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background: #2980b9;
+        }
+
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .btn-next {
+            background: #95a5a6;
+            color: white;
+            display: none;
+        }
+
+        .btn-next:hover {
+            background: #7f8c8d;
+        }
+
+        .feedback-box {
+            text-align: center;
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h1>Umgangssprachliches Russisch: Quiz</h1>
+    
+    <div class="question-box">
+        Welche zusätzliche Bedeutung kann das Wort чего in der russischen Umgangssprache haben?
+    </div>
+
+    <div class="options-list" id="options-container">
+        </div>
+
+    <div class="btn-container">
+        <button id="submit-btn" class="btn-submit" onclick="evaluateAnswer()" disabled>Überprüfen</button>
+        <button id="next-btn" class="btn-next" onclick="resetQuiz()">Neu starten</button>
+    </div>
+
+    <div id="feedback" class="feedback-box"></div>
+</div>
+
+<script>
+    // Konfiguration der Frage und Antwortoptionen
+    const quizData = {
+        options: [
+            { id: "a", text: "wie viel", isCorrect: false },
+            { id: "b", text: "warum", isCorrect: true },
+            { id: "c", text: "wer", isCorrect: false },
+            { id: "d", text: "niemals", isCorrect: false }
+        ],
+        explanation: "Richtig! In der gesprochenen Sprache ersetzt das Wort <strong>чего</strong> oft das standardsprachliche Wort <strong>почему</strong> (z. B. „Ты чего такой грустный?“ = „Warum bist du so traurig?“)."
+    };
+
+    let selectedOptionId = null;
+    let isEvaluated = false;
+
+    // Quiz beim Start laden
+    function initQuiz() {
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        
+        quizData.options.forEach(option => {
+            const item = document.createElement('div');
+            item.className = 'option-item';
+            item.dataset.id = option.id;
+            item.onclick = () => selectOption(option.id);
+
+            item.innerHTML = `
+                <div class="radio-indicator"></div>
+                <div class="option-text">${option.id}) ${option.text}</div>
+            `;
+
+            container.appendChild(item);
+        });
+    }
+
+    // Auswahl einer Option verarbeiten
+    function selectOption(id) {
+        if (isEvaluated) return;
+
+        selectedOptionId = id;
+        
+        // Visuelle Selektion aktualisieren
+        const items = document.querySelectorAll('.option-item');
+        items.forEach(item => {
+            if (item.dataset.id === id) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+
+        // Button aktivieren
+        document.getElementById('submit-btn').disabled = false;
+    }
+
+    // Auswertung der Antwort
+    function evaluateAnswer() {
+        if (isEvaluated || !selectedOptionId) return;
+        isEvaluated = true;
+
+        const items = document.querySelectorAll('.option-item');
+        const feedback = document.getElementById('feedback');
+        const submitBtn = document.getElementById('submit-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        let isSelectionCorrect = false;
+
+        items.forEach(item => {
+            item.classList.add('disabled');
+            item.classList.remove('selected');
+            
+            const optionData = quizData.options.find(o => o.id === item.dataset.id);
+            
+            if (optionData.isCorrect) {
+                item.classList.add('correct');
+                if (item.dataset.id === selectedOptionId) {
+                    isSelectionCorrect = true;
+                }
+            } else if (item.dataset.id === selectedOptionId) {
+                item.classList.add('incorrect');
+            }
+        });
+
+        // Feedback anzeigen
+        feedback.style.display = 'block';
+        if (isSelectionCorrect) {
+            feedback.style.backgroundColor = '#d4edda';
+            feedback.style.color = '#155724';
+            feedback.style.border = '1px solid #c3e6cb';
+            feedback.innerHTML = `🎉 Ausgezeichnet! ${quizData.explanation}`;
+        } else {
+            feedback.style.backgroundColor = '#f8d7da';
+            feedback.style.color = '#721c24';
+            feedback.style.border = '1px solid #f5c6cb';
+            feedback.innerHTML = `Leider falsch. Versuche es noch einmal! Vermittlungstipp: ${quizData.explanation}`;
+        }
+
+        // Buttons umschalten
+        submitBtn.style.display = 'none';
+        nextBtn.style.display = 'block';
+    }
+
+    // Zurücksetzen für einen Neustart
+    function resetQuiz() {
+        selectedOptionId = null;
+        isEvaluated = false;
+        
+        const submitBtn = document.getElementById('submit-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const feedback = document.getElementById('feedback');
+
+        feedback.style.display = 'none';
+        submitBtn.style.display = 'block';
+        submitBtn.disabled = true;
+        nextBtn.style.display = 'none';
+
+        initQuiz();
+    }
+
+    // Start-Trigger beim Laden der Seite
+    window.onload = initQuiz;
+</script>
+
+</body>
+</html>
