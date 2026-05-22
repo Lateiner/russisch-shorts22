@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch lernen: Satz-Umschreiber</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #1e4e8c;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #e2e8f0;
+            --success-color: #48bb78;
+            --success-bg: #e6fffa;
+            --error-color: #f56565;
+            --error-bg: #fff5f5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 650px;
+            width: 100%;
+            padding: 24px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .progress {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 16px;
+            font-weight: bold;
+        }
+
+        .instructions {
+            font-size: 0.95rem;
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        /* Box für den vorgegebenen Standardsatz */
+        .source-sentence-box {
+            background: #ebf8ff;
+            border: 2px solid #bee3f8;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .source-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .source-text {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2b6cb0;
+        }
+
+        .source-translation {
+            font-size: 0.95rem;
+            font-style: italic;
+            color: #4a5568;
+            margin-top: 4px;
+        }
+
+        /* Container für die Auswahloptionen */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .option-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-size: 1.15rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .option-card.disabled {
+            cursor: default;
+        }
+
+        @media (hover: hover) {
+            .option-card:not(.disabled):hover {
+                border-color: var(--primary-color);
+                background-color: #f7fafc;
+                transform: translateY(-1px);
+            }
+        }
+
+        /* Status-Färbungen nach Klick */
+        .option-card.correct {
+            border-color: var(--success-color) !important;
+            background-color: var(--success-bg) !important;
+            color: #234e52;
+            font-weight: bold;
+        }
+
+        .option-card.incorrect {
+            border-color: var(--error-color) !important;
+            background-color: var(--error-bg) !important;
+            color: #742a2a;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        /* Kontrollbereich */
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        button.reset-btn {
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: #718096;
+            display: none;
+            width: 100%;
+            max-width: 250px;
+            transition: background 0.2s;
+        }
+
+        button.reset-btn:hover {
+            background-color: #4a5568;
+        }
+
+        .feedback {
+            text-align: center;
+            margin-top: 16px;
+            font-weight: bold;
+            min-height: 24px;
+            font-size: 1.1rem;
+        }
+        .feedback.success { color: var(--success-color); }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h2>Satz-Umschreiber</h2>
+    <div class="progress" id="progressTrack">Satz 1 von 6</div>
+    <p class="instructions">
+        Wähle die grammatikalisch und stilistisch korrekte <b>umgangssprachliche Variante (mit чего)</b> für den vorgegebenen Standardsatz aus.
+    </p>
+
+    <div class="source-sentence-box">
+        <div class="source-label">Standardsprache (почему):</div>
+        <div class="source-text" id="sourceText">Почему ты вчера не пришла на вечеринку?</div>
+        <div class="source-translation" id="sourceTranslation">„Warum bist du gestern nicht zur Party gekommen?“</div>
+    </div>
+
+    <div class="options-container" id="optionsContainer"></div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="controls">
+        <button id="resetBtn" class="reset-btn" onclick="restartQuiz()">Ganz von vorn starten</button>
+    </div>
+</div>
+
+<script>
+    const transformationData = [
+        {
+            source: "Почему ты gestern не пришла на вечеринку?",
+            translation: "„Warum bist du gestern nicht zur Party gekommen?“",
+            options: [
+                { text: "А чего ты вчера не пришла на вечеринку?", isCorrect: true },
+                { text: "А ты вчера не пришла чего на вечеринку?", isCorrect: false },
+                { text: "Чего ты вчера не пришла на вечеринку почему?", isCorrect: false }
+            ],
+            explanation: "Richtig! Im umgangssprachlichen Satz steht „чего“ idealerweise am Anfang (oft eingeleitet durch „А“) vor dem Pronomen."
+        },
+        {
+            source: "Почему ты такой грустный?",
+            translation: "„Warum bist du so traurig?“",
+            options: [
+                { text: "Ты чего такой грустный?", isCorrect: true },
+                { text: "Чего такой ты грустный почему?", isCorrect: false },
+                { text: "Ты такой чего грустный?", isCorrect: false }
+            ],
+            explanation: "Korrekt! „Ты чего...“ ist die absolut geläufigste umgangssprachliche Struktur für kurze Fragen."
+        },
+        {
+            source: "Почему ты не пришла?",
+            translation: "„Warum bist du nicht gekommen?“",
+            options: [
+                { text: "Ты чего не пришла?", isCorrect: true },
+                { text: "Чего не ты пришла?", isCorrect: false },
+                { text: "Не пришла ты почему чего?", isCorrect: false }
+            ],
+            explanation: "Klasse! Bei verneinten Sätzen steht „чего“ direkt vor dem Verb bzw. dem „не“."
+        },
+        {
+            source: "Почему ты смеёшься?",
+            translation: "„Warum lachst du?“",
+            options: [
+                { text: "А чего ты смеёшься?", isCorrect: true },
+                { text: "Ты смеёшься чего?", isCorrect: false },
+                { text: "Чего смеёшься почему ты?", isCorrect: false }
+            ],
+            explanation: "Sehr gut! Das vorangestellte „А“ verstärkt den umgangssprachlichen Charakter („Warum lachst du denn?“)."
+        },
+        {
+            source: "Почему вы здесь стоите?",
+            translation: "„Warum steht ihr hier?“",
+            options: [
+                { text: "Вы чего тут стоите?", isCorrect: true },
+                { text: "Чего стоите тут вы почему?", isCorrect: false },
+                { text: "Вы тут стоиte чего?", isCorrect: false }
+            ],
+            explanation: "Stimmt! Hier wurde zudem das standardsprachliche „здесь“ passend durch das umgangssprachliche „тут“ ersetzt."
+        },
+        {
+            source: "Почему ты молчишь?",
+            translation: "„Warum schweigst du?“",
+            options: [
+                { text: "Ты чего молчишь?", isCorrect: true },
+                { text: "Молчишь чего ты?", isCorrect: false },
+                { text: "Чего ты почему молчишь?", isCorrect: false }
+            ],
+            explanation: "Ausgezeichnet! Doppelte Fragewörter (чего + почему) sind grammatikalisch immer falsch."
+        }
+    ];
+
+    let currentIndex = 0;
+    let isAnswered = false;
+
+    const progressTrack = document.getElementById('progressTrack');
+    const sourceText = document.getElementById('sourceText');
+    const sourceTranslation = document.getElementById('sourceTranslation');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const feedback = document.getElementById('feedback');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function loadQuestion() {
+        isAnswered = false;
+        feedback.textContent = "";
+        feedback.className = "feedback";
+        optionsContainer.innerHTML = "";
+
+        if (currentIndex >= transformationData.length) {
+            progressTrack.textContent = "Fertig!";
+            feedback.innerHTML = "Hervorragend! Du hast alle Sätze perfekt in die Umgangssprache übersetzt! 🎉";
+            feedback.className = "feedback success";
+            resetBtn.style.display = 'block';
+            return;
+        }
+
+        const currentData = transformationData[currentIndex];
+        progressTrack.textContent = `Satz ${currentIndex + 1} von ${transformationData.length}`;
+        sourceText.textContent = currentData.source;
+        sourceTranslation.textContent = currentData.translation;
+
+        // Optionen mischen (Fisher-Yates)
+        let shuffledOptions = [...currentData.options];
+        for (let i = shuffledOptions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+        }
+
+        // Karten rendern
+        shuffledOptions.forEach(opt => {
+            const card = document.createElement('div');
+            card.className = 'option-card';
+            card.textContent = opt.text;
+            
+            card.addEventListener('click', () => handleOptionClick(card, opt, currentData.explanation));
+            optionsContainer.appendChild(card);
+        });
+    }
+
+    function handleOptionClick(cardElement, optionData, explanationText) {
+        if (isAnswered || cardElement.classList.contains('disabled')) return;
+
+        if (optionData.isCorrect) {
+            isAnswered = true;
+            cardElement.classList.add('correct');
+            feedback.textContent = `⭐ ${explanationText}`;
+            feedback.className = "feedback success";
+
+            // Alle Karten deaktivieren
+            document.querySelectorAll('.option-card').forEach(c => c.classList.add('disabled'));
+
+            // Automatisch nach einer kurzen Pause weiterleiten
+            currentIndex++;
+            setTimeout(loadQuestion, 2400);
+        } else {
+            // Fehlersignal: Rotes Aufblitzen und Rüttel-Animation
+            cardElement.classList.add('incorrect');
+            feedback.textContent = "Das ist nicht die richtige Wortstellung. Versuche es noch einmal!";
+            feedback.className = "feedback";
+            
+            setTimeout(() => {
+                cardElement.classList.remove('incorrect');
+            }, 300);
+        }
+    }
+
+    function restartQuiz() {
+        currentIndex = 0;
+        resetBtn.style.display = 'none';
+        loadQuestion();
+    }
+
+    // Beim Laden starten
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
