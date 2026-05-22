@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Lernspiel: Umgangssprache</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #1a252f;
+        }
+
+        .instruction {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 600px) {
+            .game-grid {
+                grid-template-columns: 1fr;
+            }
+            body {
+                padding: 10px;
+            }
+            .game-container {
+                padding: 15px;
+            }
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .column-title {
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+            background: #eef2f5;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .draggable, .dropzone {
+            padding: 15px;
+            background: #fff;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.05rem;
+            user-select: none;
+        }
+
+        .draggable {
+            cursor: grab;
+            background: #e8f4fd;
+            border-color: #3498db;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            touch-action: none;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+        }
+
+        .draggable.dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+
+        .dropzone {
+            border-style: dashed;
+            background: #fafbfc;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .dropzone.hovered {
+            background: #e8f8f5;
+            border-color: #2ecc71;
+        }
+
+        .dropzone.correct {
+            background: #d4edda;
+            border-color: var(--success-color);
+            color: #155724;
+            border-style: solid;
+        }
+
+        .dropzone.incorrect {
+            background: #f8d7da;
+            border-color: var(--error-color);
+            color: #721c24;
+            border-style: solid;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-check {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-check:hover {
+            background: #2980b9;
+        }
+
+        .btn-reset {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #7f8c8d;
+        }
+
+        .feedback {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-height: 27px;
+        }
+
+        .translation {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 4px;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>Zuordnungsspiel: Umgangssprachliches Russisch</h1>
+    <div class="instruction">Ziehe die umgangssprachlichen Sätze (чего) zu ihren standardsprachlichen Entsprechungen (почему).</div>
+
+    <div class="game-grid">
+        <div class="column" id="standardsprache-column">
+            <div class="column-title">Standardsprache (почему)</div>
+        </div>
+
+        <div class="column" id="umgangssprache-column">
+            <div class="column-title">Umgangssprache (чего)</div>
+        </div>
+    </div>
+
+    <div class="btn-container">
+        <button class="btn-check" onclick="checkAnswers()">Überprüfen</button>
+        <button class="btn-reset" onclick="initGame()">Zurücksetzen</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+</div>
+
+<script>
+    // Vollständig korrigierte Daten ohne Platzhalter-Kauderwelsch
+    const pairs = [
+        {
+            id: "1",
+            standard: "<div>Почему ты такой грустный?</div><div class='translation'>„Warum bist du so traurig?“</div>",
+            umgang: "Ты чего такой грустный?"
+        },
+        {
+            id: "2",
+            standard: "<div>Почему ты вчера не пришла на вечеринку?</div><div class='translation'>„Warum bist du gestern nicht zur Party gekommen?“</div>",
+            umgang: "А чего ты вчера не пришла на вечеринку?"
+        }
+    ];
+
+    let draggedElement = null;
+
+    function initGame() {
+        const standardCol = document.getElementById('standardsprache-column');
+        const umgangCol = document.getElementById('umgangssprache-column');
+        document.getElementById('feedback').innerText = '';
+
+        // Spalten zurücksetzen
+        standardCol.innerHTML = '<div class="column-title">Standardsprache (почему)</div>';
+        umgangCol.innerHTML = '<div class="column-title">Umgangssprache (чего)</div>';
+
+        // Dropzones generieren
+        pairs.forEach(pair => {
+            const zone = document.createElement('div');
+            zone.className = 'dropzone';
+            zone.dataset.id = pair.id;
+            zone.innerHTML = pair.standard;
+            
+            zone.addEventListener('dragover', dragOver);
+            zone.addEventListener('dragenter', dragEnter);
+            zone.addEventListener('dragleave', dragLeave);
+            zone.addEventListener('drop', drop);
+
+            standardCol.appendChild(zone);
+        });
+
+        // Kärtchen mischen und generieren
+        const shuffledUmgang = [...pairs].sort(() => Math.random() - 0.5);
+
+        shuffledUmgang.forEach(pair => {
+            const item = document.createElement('div');
+            item.className = 'draggable';
+            item.draggable = true;
+            item.dataset.id = pair.id;
+            item.innerText = pair.umgang;
+
+            item.addEventListener('dragstart', dragStart);
+            item.addEventListener('dragend', dragEnd);
+
+            // Touch-Events für Mobilgeräte
+            item.addEventListener('touchstart', handleTouchStart, { passive: false });
+            item.addEventListener('touchmove', handleTouchMove, { passive: false });
+            item.addEventListener('touchend', handleTouchEnd);
+
+            umgangCol.appendChild(item);
+        });
+    }
+
+    // Drag & Drop Maus-Events
+    function dragStart(e) {
+        draggedElement = this;
+        setTimeout(() => this.classList.add('dragging'), 0);
+    }
+
+    function dragEnd() {
+        this.classList.remove('dragging');
+    }
+
+    function dragOver(e) {
+        e.preventDefault();
+    }
+
+    // Visueller Effekt beim Hovern
+    function dragEnter(e) {
+        e.preventDefault();
+        if (!this.classList.contains('correct')) {
+            this.classList.add('hovered');
+        }
+    }
+
+    function dragLeave() {
+        this.classList.remove('hovered');
+    }
+
+    function drop(e) {
+        this.classList.remove('hovered');
+        if (this.querySelectorAll('.draggable').length === 0) {
+            this.appendChild(draggedElement);
+        }
+    }
+
+    // Touch-Event-Handling für mobile Bildschirme
+    function handleTouchStart(e) {
+        draggedElement = this;
+        this.classList.add('dragging');
+    }
+
+    function handleTouchMove(e) {
+        if (!draggedElement) return;
+        e.preventDefault(); // Verhindert Scrollen beim Ziehen
+        const touch = e.touches[0];
+        
+        draggedElement.style.position = 'fixed';
+        draggedElement.style.left = `${touch.clientX - (draggedElement.offsetWidth / 2)}px`;
+        draggedElement.style.top = `${touch.clientY - (draggedElement.offsetHeight / 2)}px`;
+        draggedElement.style.zIndex = '1000';
+    }
+
+    function handleTouchEnd(e) {
+        if (!draggedElement) return;
+        
+        draggedElement.classList.remove('dragging');
+        draggedElement.style.position = '';
+        draggedElement.style.left = '';
+        draggedElement.style.top = '';
+        draggedElement.style.zIndex = '';
+
+        const touch = e.changedTouches[0];
+        const elementTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+        const dropzone = elementTarget ? elementTarget.closest('.dropzone') : null;
+
+        if (dropzone && dropzone.querySelectorAll('.draggable').length === 0) {
+            dropzone.appendChild(draggedElement);
+        }
+        
+        draggedElement = null;
+    }
+
+    // Auswertungsschleife
+    function checkAnswers() {
+        const dropzones = document.querySelectorAll('.dropzone');
+        let allCorrect = true;
+        let itemsPlaced = 0;
+
+        dropzones.forEach(zone => {
+            const placedItem = zone.querySelector('.draggable');
+            zone.classList.remove('correct', 'incorrect');
+
+            if (placedItem) {
+                itemsPlaced++;
+                if (zone.dataset.id === placedItem.dataset.id) {
+                    zone.classList.add('correct');
+                } else {
+                    zone.classList.add('incorrect');
+                    allCorrect = false;
+                }
+            } else {
+                allCorrect = false;
+            }
+        });
+
+        const feedback = document.getElementById('feedback');
+        if (itemsPlaced < pairs.length) {
+            feedback.innerText = "Bitte ordne zuerst alle Kärtchen zu!";
+            feedback.style.color = "var(--error-color)";
+        } else if (allCorrect) {
+            feedback.innerText = "Super! Alles richtig zugeordnet. Отлично!";
+            feedback.style.color = "var(--success-color)";
+        } else {
+            feedback.innerText = "Einige Zuordnungen stimmen noch nicht. Versuche es noch einmal!";
+            feedback.style.color = "var(--error-color)";
+        }
+    }
+
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
