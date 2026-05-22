@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch lernen: Swipe-Quiz (чего = warum?)</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #e2e8f0;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .progress {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 16px;
+            font-weight: bold;
+        }
+
+        .instructions {
+            font-size: 0.95rem;
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        /* Karten-Stapel Bereich */
+        .card-deck {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Die interaktive Karte */
+        .swipe-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            text-align: center;
+        }
+
+        .swipe-card:active {
+            cursor: grabbing;
+        }
+
+        .card-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .card-translation {
+            font-size: 1rem;
+            font-style: italic;
+            color: #718096;
+        }
+
+        /* Buttons für Desktop-Nutzer */
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .btn-action {
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-action:active {
+            transform: scale(0.95);
+        }
+
+        .btn-false { background-color: var(--error-color); }
+        .btn-true { background-color: var(--success-color); }
+
+        /* Feedback-Anzeige */
+        .feedback-box {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            min-height: 70px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .feedback-box.correct { background-color: #e6fffa; color: #234e52; border: 1px solid #b2f5ea; }
+        .feedback-box.incorrect { background-color: #fff5f5; color: #742a2a; border: 1px solid #fed7d7; }
+
+        .btn-restart {
+            margin-top: 15px;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: #718096;
+            display: none;
+            width: 100%;
+        }
+        .btn-restart:hover { background-color: #4a5568; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h2>Bedeutungs-Check: чего</h2>
+    <div class="progress" id="progressTrack">Karte 1 von 6</div>
+    <p class="instructions">
+        Bedeutet das Wort <b>чего</b> in diesem Satz <b>„warum“</b>?<br>
+        Wische nach links (Falsch) oder rechts (Richtig) – oder nutze die Buttons.
+    </p>
+
+    <div class="card-deck">
+        <div class="swipe-card" id="swipeCard">
+            <div class="card-text" id="cardText">Ты чего смеёшься?</div>
+            <div class="card-translation" id="cardTranslation">„Warum lachst du denn?“</div>
+        </div>
+    </div>
+
+    <div class="action-buttons" id="actionButtons">
+        <button class="btn-action btn-false" onclick="handleChoice(false)">❌ Falsch</button>
+        <button class="btn-action btn-true" onclick="handleChoice(true)"> can✅ Richtig</button>
+    </div>
+
+    <div class="feedback-box" id="feedbackBox"></div>
+
+    <button id="restartBtn" class="btn-restart">Ganz von vorn starten</button>
+</div>
+
+<script>
+    const deckData = [
+        {
+            text: "Ты чего смеёшься?",
+            translation: "„Warum lachst du denn?“",
+            isWhy: true,
+            explanation: "Richtig! Hier ersetzt „чего“ umgangssprachlich das Wort „почему“ (warum)."
+        },
+        {
+            text: "Я ничего не знаю.",
+            translation: "„Ich weiß nichts.“",
+            isWhy: false,
+            explanation: "Stimmt! „ничего“ bedeutet hier schlicht „nichts“ (Verneinung von что)."
+        },
+        {
+            text: "Ты чего такой грустный?",
+            translation: "„Warum bist du so traurig?“",
+            isWhy: true,
+            explanation: "Richtig! Klassischer umgangssprachlicher Satzbau für „warum“."
+        },
+        {
+            text: "Чего ты хочешь?",
+            translation: "„Was willst du?“",
+            isWhy: false,
+            explanation: "Stimmt! Hier ist „чего“ der Genitiv von „что“ und bedeutet „was“, nicht „warum“."
+        },
+        {
+            text: "Ты чего не пришла?",
+            translation: "„Warum bist du nicht gekommen?“",
+            isWhy: true,
+            explanation: "Richtig! „чего“ steht direkt nach dem Pronomen und bedeutet „warum“."
+        },
+        {
+            text: "Тут нет ничего страшного.",
+            translation: "„Hier ist nichts Schlimmes bei.“",
+            isWhy: false,
+            explanation: "Stimmt! Es ist die feste Wendung für „nichts Schlimmes“, kein „warum“."
+        }
+    ];
+
+    let currentIndex = 0;
+    let isAnimating = false;
+
+    const card = document.getElementById('swipeCard');
+    const cardText = document.getElementById('cardText');
+    const cardTranslation = document.getElementById('cardTranslation');
+    const progressTrack = document.getElementById('progressTrack');
+    const feedbackBox = document.getElementById('feedbackBox');
+    const actionButtons = document.getElementById('actionButtons');
+    const restartBtn = document.getElementById('restartBtn');
+
+    // Touch- & Drag-Variablen
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    function loadCard() {
+        if (currentIndex >= deckData.length) {
+            // Quiz beendet
+            progressTrack.textContent = "Fertig!";
+            card.style.display = 'none';
+            actionButtons.style.display = 'none';
+            feedbackBox.className = "feedback-box correct";
+            feedbackBox.innerHTML = "Genial! Du hast alle Karten erfolgreich durchgearbeitet! 🎉";
+            restartBtn.style.display = 'block';
+            return;
+        }
+
+        isAnimating = false;
+        feedbackBox.textContent = "";
+        feedbackBox.className = "feedback-box";
+        
+        // Karte zurücksetzen
+        card.style.opacity = '1';
+        card.style.transform = 'translateX(0px) rotate(0deg)';
+        
+        // Inhalt laden
+        const currentData = deckData[currentIndex];
+        progressTrack.textContent = `Karte ${currentIndex + 1} von ${deckData.length}`;
+        cardText.textContent = currentData.text;
+        cardTranslation.textContent = currentData.translation;
+    }
+
+    function handleChoice(userChoice) {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        const currentData = deckData[currentIndex];
+        const isCorrect = (userChoice === currentData.isWhy);
+
+        // Visuelles Feedback einblenden
+        if (isCorrect) {
+            feedbackBox.className = "feedback-box correct";
+            feedbackBox.innerHTML = `⭐ ${currentData.explanation}`;
+        } else {
+            feedbackBox.className = "feedback-box incorrect";
+            feedbackBox.innerHTML = `❌ Nicht ganz. ${currentData.explanation}`;
+        }
+
+        // Karte aus dem Bildschirm fliegen lassen (Animation)
+        const flyX = userChoice ? 1000 : -1000;
+        const rotate = userChoice ? 45 : -45;
+        card.style.transform = `translateX(${flyX}px) rotate(${rotate}deg)`;
+        card.style.opacity = '0';
+
+        // Nächste Karte nach kurzer Pause laden
+        currentIndex++;
+        setTimeout(loadCard, 1600);
+    }
+
+    // --- SWIPE GESTENSTEUERUNG (TOUCH / MAUS) ---
+    card.addEventListener('pointerdown', (e) => {
+        if (isAnimating) return;
+        isDragging = true;
+        startX = e.clientX;
+        card.style.transition = 'none';
+    });
+
+    document.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        currentX = e.clientX;
+        const diffX = currentX - startX;
+        const rotation = diffX / 15;
+        
+        // Karte der Hand/Maus folgen lassen
+        card.style.transform = `translateX(${diffX}px) rotate(${rotation}deg)`;
+    });
+
+    document.addEventListener('pointerup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        card.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+
+        const diffX = currentX - startX;
+        const threshold = 120; // Pixel-Grenze für einen erfolgreichen Swipe
+
+        if (diffX > threshold) {
+            // Nach rechts gewischt -> Richtig
+            handleChoice(true);
+        } else if (diffX < -threshold) {
+            // Nach links gewischt -> Falsch
+            handleChoice(false);
+        } else {
+            // Nicht weit genug gewischt -> Zurückfedern
+            card.style.transform = 'translateX(0px) rotate(0deg)';
+        }
+    });
+
+    // --- NEUSTART ---
+    restartBtn.addEventListener('click', () => {
+        currentIndex = 0;
+        card.style.display = 'flex';
+        actionButtons.style.display = 'flex';
+        restartBtn.style.display = 'none';
+        loadCard();
+    });
+
+    // Start
+    window.onload = loadCard;
+</script>
+
+</body>
+</html>
