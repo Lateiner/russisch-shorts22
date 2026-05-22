@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch lernen: Audio-Verständnis</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #1e4e8c;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #e2e8f0;
+            --success-color: #48bb78;
+            --success-bg: #e6fffa;
+            --error-color: #f56565;
+            --error-bg: #fff5f5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            padding: 24px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .progress {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 16px;
+            font-weight: bold;
+        }
+
+        .instructions {
+            font-size: 0.95rem;
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        /* Audio-Button */
+        .audio-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .audio-btn {
+            background: #ebf8ff;
+            border: 2px solid #bee3f8;
+            border-radius: 50%;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(43, 108, 176, 0.15);
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.05);
+            background: #dee3f8;
+        }
+
+        .audio-icon {
+            font-size: 2.5rem;
+            user-select: none;
+        }
+
+        /* Emoji-Auswahl-Karten Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 480px) {
+            .options-grid {
+                grid-template-columns: 1fr; /* Karten untereinander auf Smartphones */
+            }
+        }
+
+        .image-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .image-card.disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        @media (hover: hover) {
+            .image-card:not(.disabled):hover {
+                border-color: var(--primary-color);
+                transform: translateY(-2px);
+            }
+        }
+
+        .image-card .emoji {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            user-select: none;
+        }
+
+        .image-card .label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        /* Status-Färbungen bei Auswahl */
+        .image-card.correct {
+            border-color: var(--success-color) !important;
+            background-color: var(--success-bg) !important;
+        }
+
+        .image-card.incorrect {
+            border-color: var(--error-color) !important;
+            background-color: var(--error-bg) !important;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        /* Neustart-Button */
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        button.reset-btn {
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: #718096;
+            display: none;
+            width: 100%;
+            max-width: 250px;
+            transition: background 0.2s;
+        }
+
+        button.reset-btn:hover {
+            background-color: #4a5568;
+        }
+
+        .feedback {
+            text-align: center;
+            margin-top: 16px;
+            font-weight: bold;
+            min-height: 48px;
+            font-size: 1.1rem;
+        }
+        .feedback.success { color: var(--success-color); }
+        .feedback.error { color: var(--error-color); }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h2>Audio-Verständnis</h2>
+    <div class="progress" id="progressTrack">Aufgabe 1 von 6</div>
+    <p class="instructions">
+        Klicke auf das Audio-Symbol, um den Satz zu hören. Wähle danach das passende Emoji aus!
+    </p>
+
+    <div class="audio-section">
+        <div class="audio-btn" id="playAudioBtn">
+            <span class="audio-icon">🔊</span>
+        </div>
+    </div>
+
+    <div class="options-grid" id="optionsGrid"></div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="controls">
+        <button id="resetBtn" class="reset-btn">Ganz von vorn starten</button>
+    </div>
+</div>
+
+<script>
+    const audioQuizData = [
+        {
+            russianText: "Ты чего такой грустный?",
+            options: [
+                { emoji: "😢", label: "Trauriges Gesicht", isCorrect: true },
+                { emoji: "😂", label: "Lachendes Gesicht", isCorrect: false },
+                { emoji: "😴", label: "Müdes Gesicht", isCorrect: false }
+            ],
+            explanation: "Richtig! „Ты чего такой грустный?“ bedeutet: „Warum bist du so traurig?“"
+        },
+        {
+            russianText: "А чего ты смеёшься?",
+            options: [
+                { emoji: "🤔", label: "Nachdenklich", isCorrect: false },
+                { emoji: "🥳", label: "Feiernd", isCorrect: false },
+                { emoji: "😂", label: "Lachendes Gesicht", isCorrect: true }
+            ],
+            explanation: "Korrekt! „А чего ты смеёшься?“ heißt übersetzt: „Warum lachst du denn?“"
+        },
+        {
+            russianText: "Я просто устал.",
+            options: [
+                { emoji: "😴", label: "Müde / Erschöpft", isCorrect: true },
+                { emoji: "😡", label: "Wütend", isCorrect: false },
+                { emoji: "😎", label: "Gelassen", isCorrect: false }
+            ],
+            explanation: "Klasse! „Я просто устал.“ bedeutet: „Ich bin einfach müde.“"
+        },
+        {
+            russianText: "Чего ты вчера не пришла на вечеринку?",
+            options: [
+                { emoji: "🏢", label: "Im Büro arbeiten", isCorrect: false },
+                { emoji: "🎉", label: "Party / Feier", isCorrect: true },
+                { emoji: "🏥", label: "Krankenhaus", isCorrect: false }
+            ],
+            explanation: "Sehr gut! „вечеринку“ bedeutet Party (Warum bist du gestern nicht zur Party gekommen?)."
+        },
+        {
+            russianText: "Чего ты хочешь от меня? Я спал.",
+            options: [
+                { emoji: "🛏️", label: "Im Bett schlafen", isCorrect: true },
+                { emoji: "🍕", label: "Essen bestellen", isCorrect: false },
+                { emoji: "🏃", label: "Sport machen", isCorrect: false }
+            ],
+            explanation: "Stimmt! „Я спал.“ bedeutet: „Ich habe geschlafen.“"
+        },
+        {
+            russianText: "Тут нет ничего страшного.",
+            options: [
+                { emoji: "👻", label: "Etwas Gruseliges", isCorrect: false },
+                { emoji: "🛡️", label: "Keine Sorge / Sicher", isCorrect: true },
+                { emoji: "😭", label: "Große Trauer", isCorrect: false }
+            ],
+            explanation: "Perfekt! „Тут нет ничего страшного.“ bedeutet: „Hier ist nichts Schlimmes dabei.“"
+        }
+    ];
+
+    let currentIndex = 0;
+    let isAnswered = false;
+    let ruVoice = null;
+
+    const progressTrack = document.getElementById('progressTrack');
+    const optionsGrid = document.getElementById('optionsGrid');
+    const feedback = document.getElementById('feedback');
+    const resetBtn = document.getElementById('resetBtn');
+    const playAudioBtn = document.getElementById('playAudioBtn');
+
+    // Zuverlässiges Laden der russischen TTS-Stimme
+    function initSpeechEngine() {
+        if ('speechSynthesis' in window) {
+            const findVoice = () => {
+                const voices = window.speechSynthesis.getVoices();
+                // Suche nach einer dedizierten russischen Stimme
+                ruVoice = voices.find(voice => voice.lang === 'ru-RU' || voice.lang.startsWith('ru'));
+            };
+            findVoice();
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = findVoice;
+            }
+        }
+    }
+
+    function speakCurrentSentence() {
+        if (currentIndex >= audioQuizData.length || !('speechSynthesis' in window)) return;
+        
+        window.speechSynthesis.cancel(); // Stoppe laufende Sprachausgaben
+        const textToSpeak = audioQuizData[currentIndex].russianText;
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        
+        if (ruVoice) {
+            utterance.voice = ruVoice;
+        }
+        utterance.lang = 'ru-RU';
+        utterance.rate = 0.8; // Für Schüler leicht verlangsamt
+        
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function loadQuestion() {
+        isAnswered = false;
+        feedback.textContent = "";
+        feedback.className = "feedback";
+        optionsGrid.innerHTML = "";
+
+        if (currentIndex >= audioQuizData.length) {
+            progressTrack.textContent = "Fertig!";
+            feedback.innerHTML = "Hervorragend! Du hast das Audio-Verständnis komplett gemeistert! 🎉";
+            feedback.className = "feedback success";
+            playAudioBtn.style.opacity = '0.4';
+            playAudioBtn.style.pointerEvents = 'none';
+            resetBtn.style.display = 'block';
+            return;
+        }
+
+        const currentData = audioQuizData[currentIndex];
+        progressTrack.textContent = `Aufgabe ${currentIndex + 1} von ${audioQuizData.length}`;
+
+        // Generiere das Antwort-Grid dynamisch aus den Emojis
+        currentData.options.forEach(opt => {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            card.innerHTML = `
+                <div class="emoji">${opt.emoji}</div>
+                <div class="label">${opt.label}</div>
+            `;
+            
+            card.addEventListener('click', () => handleCardClick(card, opt));
+            optionsGrid.appendChild(card);
+        });
+    }
+
+    function handleCardClick(cardElement, optionData) {
+        if (isAnswered || cardElement.classList.contains('disabled')) return;
+
+        const currentData = audioQuizData[currentIndex];
+
+        if (optionData.isCorrect) {
+            isAnswered = true;
+            cardElement.classList.add('correct');
+            feedback.textContent = `⭐ ${currentData.explanation}`;
+            feedback.className = "feedback success";
+
+            // Sperre alle Kacheln nach korrekter Auswahl
+            document.querySelectorAll('.image-card').forEach(c => c.classList.add('disabled'));
+
+            // Automatischer Sprung zur nächsten Karte nach kurzer Pause
+            currentIndex++;
+            setTimeout(loadQuestion, 2000);
+        } else {
+            // Fehlersignal: Rotes Aufblitzen und Rüttel-Animation
+            cardElement.classList.add('incorrect');
+            feedback.textContent = "Das passt nicht zur Audioaufnahme. Hör noch mal genau hin!";
+            feedback.className = "feedback error";
+            
+            setTimeout(() => {
+                cardElement.classList.remove('incorrect');
+            }, 300);
+        }
+    }
+
+    // --- NEUSTART-LOGIK ---
+    resetBtn.addEventListener('click', () => {
+        currentIndex = 0;
+        resetBtn.style.display = 'none';
+        playAudioBtn.style.opacity = '1';
+        playAudioBtn.style.pointerEvents = 'auto';
+        loadQuestion();
+    });
+
+    // Audio-Button Klick-Event binden
+    playAudioBtn.addEventListener('click', speakCurrentSentence);
+
+    // Initialisierung beim Laden
+    window.onload = () => {
+        initSpeechEngine();
+        loadQuestion();
+    };
+</script>
+
+</body>
+</html>
