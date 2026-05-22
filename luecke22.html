@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch lernen: Textlücken per Dropdown</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #1e4e8c;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #e2e8f0;
+            --success-color: #48bb78;
+            --success-bg: #e6fffa;
+            --error-color: #f56565;
+            --error-bg: #fff5f5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            padding: 24px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .progress {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 16px;
+            font-weight: bold;
+        }
+
+        .instructions {
+            font-size: 0.95rem;
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .style-instruction {
+            text-align: center;
+            font-weight: bold;
+            color: #2c5282;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            background: #ebf8ff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #bee3f8;
+        }
+
+        /* Bereich für den Satz mit der Lücke */
+        .sentence-box {
+            background: #f8fafc;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            min-height: 100px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-weight: 500;
+        }
+
+        /* Das Dropdown-Menü im Text */
+        .gap-select {
+            font-size: 1.15rem;
+            font-weight: bold;
+            padding: 6px 12px;
+            border: 2px solid var(--primary-color);
+            border-radius: 6px;
+            background-color: white;
+            color: var(--text-color);
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .gap-select.correct {
+            border-color: var(--success-color);
+            background-color: var(--success-bg);
+            color: #234e52;
+            cursor: default;
+        }
+
+        .gap-select.incorrect {
+            border-color: var(--error-color);
+            background-color: var(--error-bg);
+            color: #742a2a;
+        }
+
+        .translation-hint {
+            text-align: center;
+            font-style: italic;
+            color: #718096;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+        }
+
+        /* Kontroll-Buttons */
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        button {
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            max-width: 250px;
+            background-color: #718096;
+            display: none;
+        }
+
+        button:hover {
+            background-color: #4a5568;
+        }
+
+        .feedback {
+            text-align: center;
+            margin-top: 16px;
+            font-weight: bold;
+            min-height: 24px;
+            font-size: 1.1rem;
+        }
+        .feedback.success { color: var(--success-color); }
+        .feedback.error { color: var(--error-color); }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h2>Textlücken füllen</h2>
+    <div class="progress" id="progressTrack">Satz 1 von 6</div>
+    <p class="instructions">
+        Wähle das passende Fragewort aus dem Dropdown-Menü aus. Achte dabei genau auf den geforderten Sprachstil!
+    </p>
+
+    <div class="style-instruction" id="styleInstruction">Geforderter Stil: Umgangssprache</div>
+
+    <div class="sentence-box" id="sentenceBox"></div>
+    
+    <div class="translation-hint" id="translationHint">„Übersetzung...“</div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="controls">
+        <button id="resetBtn">Ganz von vorn starten</button>
+    </div>
+</div>
+
+<script>
+    // 6 Sätze, bei denen abwechselnd Umgangs- und Standardsprache gefordert wird
+    const quizData = [
+        {
+            textBefore: "А",
+            textAfter: "ты вчера не пришла на вечеринку?",
+            options: ["чего", "почему", "что"],
+            correctAnswer: "чего",
+            style: "Umgangssprache (Разговорная речь)",
+            translation: "„Warum bist du gestern nicht zur Party gekommen?“"
+        },
+        {
+            textBefore: "",
+            textAfter: "ты вчера не пришла на вечеринку?",
+            options: ["Чего", "Почему", "Что"],
+            correctAnswer: "Почему",
+            style: "Standardsprache (Литературный язык)",
+            translation: "„Warum bist du gestern nicht zur Party gekommen?“"
+        },
+        {
+            textBefore: "Ты",
+            textAfter: "такой грустный?",
+            options: ["чего", "почему", "что"],
+            correctAnswer: "чего",
+            style: "Umgangssprache (Разговорная речь)",
+            translation: "„Warum bist du so traurig?“"
+        },
+        {
+            textBefore: "",
+            textAfter: "ты такой грустный?",
+            options: ["Чего", "Почему", "Что"],
+            correctAnswer: "Почему",
+            style: "Standardsprache (Литературный язык)",
+            translation: "„Warum bist du so traurig?“"
+        },
+        {
+            textBefore: "Ты",
+            textAfter: "не пришла?",
+            options: ["чего", "почему", "что"],
+            correctAnswer: "чего",
+            style: "Umgangssprache (Разговорная речь)",
+            translation: "„Warum bist du nicht gekommen?“"
+        },
+        {
+            textBefore: "А",
+            textAfter: "ты смеёшься?",
+            options: ["чего", "почему", "что"],
+            correctAnswer: "чего",
+            style: "Umgangssprache (Разговорная речь)",
+            translation: "„Warum lachst du denn?“"
+        }
+    ];
+
+    let currentSentenceIndex = 0;
+
+    const progressTrack = document.getElementById('progressTrack');
+    const styleInstruction = document.getElementById('styleInstruction');
+    const sentenceBox = document.getElementById('sentenceBox');
+    const translationHint = document.getElementById('translationHint');
+    const feedback = document.getElementById('feedback');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function loadQuestion() {
+        feedback.textContent = "";
+        feedback.className = "feedback";
+        sentenceBox.innerHTML = "";
+
+        const currentData = quizData[currentSentenceIndex];
+        progressTrack.textContent = `Satz ${currentSentenceIndex + 1} von ${quizData.length}`;
+        styleInstruction.textContent = `Geforderter Stil: ${currentData.style}`;
+        translationHint.textContent = currentData.translation;
+
+        // Text vor der Lücke erstellen
+        if (currentData.textBefore) {
+            const spanBefore = document.createElement('span');
+            spanBefore.textContent = currentData.textBefore + " ";
+            sentenceBox.appendChild(spanBefore);
+        }
+
+        // Dropdown-Menü (Lücke) erstellen
+        const select = document.createElement('select');
+        select.className = 'gap-select';
+        
+        // Standard-Platzhalter Option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "";
+        defaultOption.textContent = " — ? — ";
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        select.appendChild(defaultOption);
+
+        // Optionen mischen
+        let shuffledOptions = [...currentData.options].sort(() => Math.random() - 0.5);
+        shuffledOptions.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            option.textContent = opt;
+            select.appendChild(option);
+        });
+
+        // Event-Listener für direkte Auswertung
+        select.addEventListener('change', () => handleSelection(select));
+        sentenceBox.appendChild(select);
+
+        // Text nach der Lücke erstellen
+        const spanAfter = document.createElement('span');
+        spanAfter.textContent = " " + currentData.textAfter;
+        sentenceBox.appendChild(spanAfter);
+    }
+
+    function handleSelection(selectElement) {
+        const currentData = quizData[currentSentenceIndex];
+        const selectedValue = selectElement.value;
+
+        // Vorherige Fehlerklassen entfernen
+        selectElement.classList.remove('incorrect');
+
+        if (selectedValue === currentData.correctAnswer) {
+            // Richtige Antwort gewählt
+            selectElement.classList.add('correct');
+            selectElement.disabled = true; // Sperren nach richtiger Wahl
+            
+            if (currentSentenceIndex < quizData.length - 1) {
+                feedback.textContent = "Ausgezeichnet! Nächste Aufgabe...";
+                feedback.className = "feedback success";
+                currentSentenceIndex++;
+                setTimeout(loadQuestion, 1400); // Automatisch weiter nach kurzer Pause
+            } else {
+                feedback.textContent = "Genial! Du hast alle Lücken perfekt ausgefüllt! 🎉";
+                feedback.className = "feedback success";
+                resetBtn.style.display = 'block';
+            }
+        } else {
+            // Falsche Antwort gewählt
+            selectElement.classList.add('incorrect');
+            feedback.textContent = "Das passt hier leider nicht zum geforderten Stil. Versuche es noch einmal!";
+            feedback.className = "feedback error";
+        }
+    }
+
+    // --- NEUSTART ---
+    resetBtn.addEventListener('click', () => {
+        currentSentenceIndex = 0;
+        resetBtn.style.display = 'none';
+        loadQuestion();
+    });
+
+    // Erstes Laden beim App-Start
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
